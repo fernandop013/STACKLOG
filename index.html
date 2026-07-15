@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<title>Stack/Log</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Stack/Log">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="apple-touch-icon" sizes="152x152" href="icon-152.png">
+<link rel="apple-touch-icon" sizes="167x167" href="icon-167.png">
+<link rel="apple-touch-icon" sizes="120x120" href="icon-120.png">
+<link rel="icon" href="icon-180.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#12161C; --surface:#1B212B; --surface2:#161B22; --border:#2A323D;
+    --text:#E8EAED; --muted:#8B95A1; --muted2:#6B7480;
+    --sup:#5FA8D3; --sup-dim:#274357;
+    --ped:#D65F5F; --ped-dim:#4A2A2A;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:'Space Grotesk',sans-serif;
+    min-height:100vh; -webkit-user-select:none; user-select:none;}
+  input,textarea,select{-webkit-user-select:text;user-select:text;}
+  button{cursor:pointer;font-family:inherit;}
+  ::-webkit-scrollbar{width:8px;height:8px;}
+  ::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px;}
+  .app{padding-bottom:40px;min-height:100vh;}
+  header{position:sticky;top:0;z-index:10;background:rgba(18,22,28,0.92);backdrop-filter:blur(8px);
+    border-bottom:1px solid var(--border);padding:14px 16px;padding-top:calc(14px + env(safe-area-inset-top));
+    display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;}
+  .brand{display:flex;align-items:center;gap:8px;font-weight:700;letter-spacing:1px;font-size:15px;}
+  .brand .dim{color:var(--muted);}
+  nav{display:flex;gap:6px;background:var(--surface);padding:4px;border-radius:10px;border:1px solid var(--border);}
+  .navbtn{display:flex;align-items:center;gap:6px;background:transparent;border:none;color:var(--muted);
+    padding:8px 12px;border-radius:8px;font-size:13px;font-weight:500;}
+  .navbtn.active{background:var(--border);color:var(--text);}
+  .permbanner{display:flex;align-items:center;justify-content:space-between;gap:12px;background:var(--surface);
+    border:1px solid var(--border);margin:12px 16px 0;padding:10px 14px;border-radius:10px;font-size:13px;
+    color:var(--muted);flex-wrap:wrap;}
+  .permbtn{background:var(--sup);color:#0A0D11;border:none;border-radius:8px;padding:6px 12px;font-weight:600;font-size:12px;}
+  main{max-width:720px;margin:0 auto;padding:20px 16px;}
+  .sectionhead{display:flex;align-items:baseline;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:14px;}
+  h2{font-size:20px;font-weight:700;margin:0;}
+  h3{font-size:16px;font-weight:600;margin:0;}
+  .subtle{color:var(--muted);font-size:13px;font-family:'IBM Plex Mono',monospace;}
+  .emptynote{color:var(--muted);font-size:14px;padding:20px 0;text-align:center;border:1px dashed var(--border);border-radius:12px;}
+  .list{display:flex;flex-direction:column;gap:10px;}
+  .card{display:flex;gap:12px;background:var(--surface);border:1px solid var(--border);border-radius:10px;
+    padding:12px 14px;align-items:center;}
+  .stripe{width:4px;align-self:stretch;border-radius:2px;flex-shrink:0;}
+  .card-body{flex:1;min-width:0;}
+  .card-top{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:2px;}
+  .cat-label{font-size:10px;font-weight:700;letter-spacing:0.8px;font-family:'IBM Plex Mono',monospace;}
+  .sched-label{font-size:11px;color:var(--muted);display:flex;align-items:center;gap:4px;font-family:'IBM Plex Mono',monospace;}
+  .card-name{font-size:15px;font-weight:600;}
+  .card-meta{font-size:13px;color:var(--muted);font-family:'IBM Plex Mono',monospace;}
+  .card-notes{font-size:12px;color:var(--muted2);margin-top:4px;font-style:italic;}
+  .checkbtn{width:30px;height:30px;border-radius:50%;border:1px solid var(--border);background:transparent;
+    color:var(--text);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:15px;}
+  .checkbtn.done{background:var(--sup-dim);border-color:var(--sup);color:var(--sup);}
+  .fab{position:fixed;bottom:calc(24px + env(safe-area-inset-bottom));right:24px;width:52px;height:52px;
+    border-radius:50%;background:var(--sup);color:#0A0D11;border:none;display:flex;align-items:center;
+    justify-content:center;box-shadow:0 6px 20px rgba(0,0,0,0.4);font-size:22px;}
+  .addbtn{display:flex;align-items:center;gap:6px;background:var(--surface);border:1px solid var(--border);
+    color:var(--text);padding:8px 12px;border-radius:8px;font-size:13px;}
+  .iconbtn{background:transparent;border:1px solid var(--border);color:var(--text);width:32px;height:32px;
+    border-radius:8px;display:flex;align-items:center;justify-content:center;}
+  .iconbtn.small{width:28px;height:28px;color:var(--muted);}
+  .calhead{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+  .weekrow{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;font-family:'IBM Plex Mono',monospace;
+    font-size:11px;color:var(--muted);text-align:center;margin-bottom:4px;}
+  .grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;}
+  .daycell{min-height:52px;background:var(--surface);border:1px solid var(--border);border-radius:8px;
+    color:var(--text);display:flex;flex-direction:column;align-items:center;padding:6px 2px;}
+  .daycell.empty{background:transparent;border:none;min-height:52px;}
+  .daycell.selected{border-color:var(--sup);}
+  .daycell.today{background:#20293380;}
+  .daynum{font-size:13px;font-family:'IBM Plex Mono',monospace;}
+  .dotrow{display:flex;gap:3px;margin-top:4px;flex-wrap:wrap;justify-content:center;}
+  .dot{width:5px;height:5px;border-radius:50%;}
+  .selectedpanel{margin-top:16px;display:flex;flex-direction:column;gap:10px;}
+  .emptystate{display:flex;flex-direction:column;align-items:center;gap:12px;padding:60px 20px;text-align:center;}
+  .emptytext{color:var(--muted);font-size:14px;max-width:320px;margin:0;}
+  .primarybtn{display:inline-flex;align-items:center;gap:6px;background:var(--sup);color:#0A0D11;border:none;
+    padding:10px 16px;border-radius:9px;font-size:13px;font-weight:600;}
+  .primarybtn:disabled{opacity:0.5;}
+  .secondarybtn{background:transparent;color:var(--muted);border:1px solid var(--border);padding:10px 16px;
+    border-radius:9px;font-size:13px;}
+  .overlay{position:fixed;inset:0;background:rgba(6,8,11,0.7);display:flex;align-items:center;justify-content:center;
+    padding:16px;z-index:50;}
+  .modal{background:var(--surface2);border:1px solid var(--border);border-radius:14px;width:100%;max-width:440px;
+    max-height:88vh;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:16px;
+    -webkit-user-select:auto;user-select:auto;}
+  .modalhead{display:flex;align-items:center;justify-content:space-between;}
+  .modalfoot{display:flex;justify-content:flex-end;gap:8px;}
+  .formgrid{display:flex;flex-direction:column;gap:12px;}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  .field{display:flex;flex-direction:column;gap:6px;}
+  .fieldlabel{font-size:12px;color:var(--muted);font-weight:500;}
+  input[type=text],input[type=number],input[type=date],select,textarea{
+    background:var(--surface);border:1px solid var(--border);color:var(--text);border-radius:8px;
+    padding:9px 10px;font-family:'IBM Plex Mono',monospace;font-size:13px;width:100%;}
+  textarea{min-height:60px;resize:vertical;}
+  .segmented{display:flex;gap:6px;}
+  .segbtn{flex:1;background:var(--surface);border:1px solid var(--border);color:var(--muted);padding:8px 10px;
+    border-radius:8px;font-size:13px;}
+  .segbtn.active-sup{background:var(--sup-dim);color:var(--sup);border-color:var(--sup);}
+  .segbtn.active-ped{background:var(--ped-dim);color:var(--ped);border-color:var(--ped);}
+  .weekpicker{display:flex;gap:6px;flex-wrap:wrap;}
+  .weekpick{width:34px;height:34px;border-radius:8px;background:var(--surface);border:1px solid var(--border);
+    color:var(--muted);font-family:'IBM Plex Mono',monospace;font-size:12px;}
+  .weekpick.active{background:var(--sup-dim);border-color:var(--sup);color:var(--sup);}
+  .ingredients-list{display:flex;flex-direction:column;gap:8px;margin-bottom:8px;}
+  .ingredient-row{display:flex;gap:6px;align-items:center;}
+  .ingredient-row input[type=text]:nth-child(1){flex:2;min-width:0;}
+  .ingredient-row input[type=text]:nth-child(2){flex:1;min-width:0;}
+  .ingredient-row select{flex:0 0 64px;padding:9px 4px;}
+  .ingredient-row .iconbtn.small{flex-shrink:0;color:var(--ped);}
+  @media (prefers-reduced-motion: reduce){*{transition:none !important;animation:none !important;}}
+</style>
+</head>
+<body>
+<div class="app" id="app"></div>
+
+<script>
+// ---------- Lokaler Speicher (localStorage) ----------
+const STORE_KEY = "stacklog:v1";
+function loadState(){
+  try {
+    const raw = localStorage.getItem(STORE_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch(e) {}
+  return { items: [], log: {} };
+}
+function saveState(state){
+  try { localStorage.setItem(STORE_KEY, JSON.stringify(state)); }
+  catch(e) { console.error("Speichern fehlgeschlagen", e); }
+}
+let state = loadState();
+
+// ---------- Konstanten ----------
+const CATS = {
+  supplement: { label: "Supplement", accent: "#5FA8D3", cls: "sup" },
+  compound:   { label: "Compound",   accent: "#D65F5F", cls: "ped" },
+};
+const SCHEDULES = { daily: "Täglich", every_n: "Alle N Tage", weekly: "Bestimmte Wochentage", once: "Einzeltermin" };
+const WEEKDAYS = ["So","Mo","Di","Mi","Do","Fr","Sa"];
+const MONTHS = ["Januar","Februar","März","April","Mai","Juni","Juli","August","September","Oktober","November","Dezember"];
+
+const uid = () => Math.random().toString(36).slice(2,10);
+const fmt = (d) => { const y=d.getFullYear(), m=String(d.getMonth()+1).padStart(2,"0"), day=String(d.getDate()).padStart(2,"0"); return `${y}-${m}-${day}`; };
+const parseLocal = (s) => { const [y,m,d] = s.split("-").map(Number); return new Date(y,m-1,d); };
+const todayStr = () => fmt(new Date());
+const daysBetween = (a,b) => Math.round((b-a)/86400000);
+
+function isDue(item, dateStr){
+  const d = parseLocal(dateStr);
+  const start = parseLocal(item.startDate);
+  if (d < new Date(start.getFullYear(),start.getMonth(),start.getDate())) return false;
+  switch(item.scheduleType){
+    case "daily": return true;
+    case "every_n": { const diff = daysBetween(start,d); const n = Math.max(1, parseInt(item.interval||"1",10)); return diff % n === 0; }
+    case "weekly": return (item.weekdays||[]).includes(d.getDay());
+    case "once": return item.startDate === dateStr;
+    default: return false;
+  }
+}
+function scheduleSummary(item){
+  if (item.scheduleType==="daily") return "täglich";
+  if (item.scheduleType==="every_n") return `alle ${item.interval||1} Tage`;
+  if (item.scheduleType==="weekly") return (item.weekdays||[]).slice().sort().map(w=>WEEKDAYS[w]).join(", ") || "keine Tage gewählt";
+  if (item.scheduleType==="once") return `einmalig am ${item.startDate}`;
+  return "";
+}
+function dueOn(dateStr){ return state.items.filter(it => isDue(it, dateStr)); }
+
+// ---------- App-Zustand ----------
+let ui = { tab:"today", calY:new Date().getFullYear(), calM:new Date().getMonth(), selectedDay:todayStr(), modal:null };
+
+function esc(s){ return (s||"").toString().replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+
+function render(){
+  const app = document.getElementById("app");
+  app.innerHTML = `
+    <header>
+      <div class="brand">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#5FA8D3" stroke-width="2"><path d="M9 3h6M10 3v6l-5 9a2 2 0 001.7 3h10.6a2 2 0 001.7-3l-5-9V3"/></svg>
+        <span>STACK<span class="dim">/LOG</span></span>
+      </div>
+      <nav>
+        <button class="navbtn ${ui.tab==='today'?'active':''}" onclick="setTab('today')">Heute</button>
+        <button class="navbtn ${ui.tab==='calendar'?'active':''}" onclick="setTab('calendar')">Kalender</button>
+        <button class="navbtn ${ui.tab==='stack'?'active':''}" onclick="setTab('stack')">Plan</button>
+      </nav>
+    </header>
+    <main id="main"></main>
+    <div id="modalRoot"></div>
+  `;
+  renderMain();
+  renderModal();
+}
+
+function setTab(t){ ui.tab = t; render(); }
+
+function renderMain(){
+  const main = document.getElementById("main");
+  if (ui.tab === "today") main.innerHTML = viewToday();
+  else if (ui.tab === "calendar") main.innerHTML = viewCalendar();
+  else main.innerHTML = viewStack();
+}
+
+function ingredientsSummary(item){
+  if (item.ingredients && item.ingredients.length){
+    return item.ingredients
+      .filter(i => i.name && i.name.trim())
+      .map(i => `${i.name}${i.amount ? ` ${i.amount}${i.unit||""}` : ""}`)
+      .join(", ");
+  }
+  return item.substance || "";
+}
+
+function labelCard(item, dateStr, showCheck){
+  const cat = CATS[item.category];
+  const taken = dateStr ? !!state.log[`${item.id}:${dateStr}`] : false;
+  const ingSummary = ingredientsSummary(item);
+  return `
+    <div class="card">
+      <div class="stripe" style="background:${cat.accent}"></div>
+      <div class="card-body">
+        <div class="card-top">
+          <span class="cat-label" style="color:${cat.accent}">${cat.label.toUpperCase()}</span>
+          <span class="sched-label">⏱ ${esc(scheduleSummary(item))}</span>
+        </div>
+        <div class="card-name">${esc(item.name)}</div>
+        <div class="card-meta">${esc(item.amount)}${item.unit?` ${esc(item.unit)}`:""}${ingSummary?` · ${esc(ingSummary)}`:""}${item.syringeUnits?` · Spritze: ${esc(item.syringeUnits)}`:""}</div>
+        ${item.notes?`<div class="card-notes">${esc(item.notes)}</div>`:""}
+      </div>
+      ${showCheck ? `<button class="checkbtn ${taken?'done':''}" onclick="toggleTaken('${item.id}','${dateStr}')">${taken?'✓':''}</button>`
+                  : `<div style="display:flex;gap:8px;">
+                       <button class="iconbtn small" onclick="openEdit('${item.id}')">✎</button>
+                       <button class="iconbtn small" style="color:var(--ped)" onclick="deleteItem('${item.id}')">🗑</button>
+                     </div>`}
+    </div>
+  `;
+}
+
+function viewToday(){
+  if (state.items.length === 0) return emptyState("Noch kein Plan angelegt. Leg dein erstes Supplement oder Compound an, um zu starten.");
+  const date = todayStr();
+  const due = dueOn(date);
+  const niceDate = new Date().toLocaleDateString("de-DE",{weekday:"long",day:"numeric",month:"long"});
+  return `
+    <div class="sectionhead"><h2>Heute</h2><span class="subtle">${niceDate}</span></div>
+    ${due.length===0 ? `<div class="emptynote">Für heute ist nichts fällig.</div>`
+      : `<div class="list">${due.map(it=>labelCard(it,date,true)).join("")}</div>`}
+    <button class="fab" onclick="openNew()">+</button>
+  `;
+}
+
+function viewStack(){
+  if (state.items.length === 0) return emptyState("Dein Plan ist leer. Füge Supplemente oder Compounds mit Menge, Inhaltsstoff und Zeitplan hinzu.");
+  return `
+    <div class="sectionhead"><h2>Mein Plan</h2><button class="addbtn" onclick="openNew()">+ Hinzufügen</button></div>
+    <div class="list">${state.items.map(it=>labelCard(it,null,false)).join("")}</div>
+  `;
+}
+
+function viewCalendar(){
+  const y = ui.calY, m = ui.calM;
+  const first = new Date(y,m,1);
+  const startWeekday = first.getDay();
+  const daysInMonth = new Date(y,m+1,0).getDate();
+  let cells = "";
+  for (let i=0;i<startWeekday;i++) cells += `<div class="daycell empty"></div>`;
+  for (let d=1; d<=daysInMonth; d++){
+    const dateStr = fmt(new Date(y,m,d));
+    const due = dueOn(dateStr);
+    const isToday = dateStr === todayStr();
+    const isSelected = dateStr === ui.selectedDay;
+    cells += `
+      <button class="daycell ${isSelected?'selected':''} ${isToday?'today':''}" onclick="selectDay('${dateStr}')">
+        <span class="daynum">${d}</span>
+        <div class="dotrow">${due.slice(0,4).map(it=>`<span class="dot" style="background:${CATS[it.category].accent}"></span>`).join("")}</div>
+      </button>`;
+  }
+  const dueSelected = dueOn(ui.selectedDay);
+  const selNice = parseLocal(ui.selectedDay).toLocaleDateString("de-DE",{weekday:"long",day:"numeric",month:"long"});
+  return `
+    <div class="calhead">
+      <button class="iconbtn" onclick="shiftMonth(-1)">‹</button>
+      <h2>${MONTHS[m]} ${y}</h2>
+      <button class="iconbtn" onclick="shiftMonth(1)">›</button>
+    </div>
+    <div class="weekrow">${WEEKDAYS.map(w=>`<div>${w}</div>`).join("")}</div>
+    <div class="grid">${cells}</div>
+    <div class="selectedpanel">
+      <h3>${selNice}</h3>
+      ${dueSelected.length===0 ? `<div class="emptynote">Nichts fällig an diesem Tag.</div>`
+        : `<div class="list">${dueSelected.map(it=>labelCard(it,ui.selectedDay,true)).join("")}</div>`}
+    </div>
+  `;
+}
+
+function emptyState(text){
+  return `
+    <div class="emptystate">
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#8B95A1" stroke-width="2"><path d="M9 3h6M10 3v6l-5 9a2 2 0 001.7 3h10.6a2 2 0 001.7-3l-5-9V3"/></svg>
+      <p class="emptytext">${esc(text)}</p>
+      <button class="primarybtn" onclick="openNew()">+ Ersten Eintrag anlegen</button>
+    </div>`;
+}
+
+function setTabGlobal(){}
+function shiftMonth(delta){
+  let nm = ui.calM + delta, ny = ui.calY;
+  if (nm<0){ nm=11; ny-=1; } else if (nm>11){ nm=0; ny+=1; }
+  ui.calM = nm; ui.calY = ny;
+  renderMain();
+}
+function selectDay(d){ ui.selectedDay = d; renderMain(); }
+function toggleTaken(itemId, dateStr){
+  const key = `${itemId}:${dateStr}`;
+  if (state.log[key]) delete state.log[key]; else state.log[key] = true;
+  saveState(state);
+  renderMain();
+}
+function deleteItem(id){
+  state.items = state.items.filter(i=>i.id!==id);
+  saveState(state);
+  renderMain();
+}
+function openNew(){ ui.modal = { mode:"new", form: blankForm() }; renderModal(); }
+function openEdit(id){
+  const item = state.items.find(i=>i.id===id);
+  const form = JSON.parse(JSON.stringify(item));
+  if (!form.ingredients || !form.ingredients.length){
+    form.ingredients = form.substance ? [{ id: uid(), name: form.substance, amount:"", unit:"" }] : [];
+  }
+  delete form.substance;
+  ui.modal = { mode:"edit", form };
+  renderModal();
+}
+function closeModal(){ ui.modal = null; renderModal(); }
+function blankForm(){
+  return { id: uid(), name:"", category:"supplement", amount:"", unit:"mg", ingredients:[], notes:"",
+    scheduleType:"daily", interval:"2", weekdays:[], startDate: todayStr(), syringeUnits:"" };
+}
+
+function renderModal(){
+  const root = document.getElementById("modalRoot");
+  if (!ui.modal){ root.innerHTML=""; return; }
+  const f = ui.modal.form;
+  const unitOptions = ["mg","µg","g","IE","ml","Kapsel(n)","Tablette(n)","Tropfen"];
+  root.innerHTML = `
+    <div class="overlay" onclick="closeModal()">
+      <div class="modal" onclick="event.stopPropagation()">
+        <div class="modalhead">
+          <h3>${ui.modal.mode==='edit'?'Eintrag bearbeiten':'Neuer Eintrag'}</h3>
+          <button class="iconbtn" onclick="closeModal()">✕</button>
+        </div>
+        <div class="formgrid">
+          <label class="field"><span class="fieldlabel">Name</span>
+            <input type="text" data-field="name" value="${esc(f.name)}" placeholder="z. B. Vitamin D3" oninput="updateFormSilent('name',this.value)">
+          </label>
+          <label class="field"><span class="fieldlabel">Kategorie</span>
+            <div class="segmented">
+              <button type="button" class="segbtn ${f.category==='supplement'?'active-sup':''}" onclick="updateForm('category','supplement')">Supplement</button>
+              <button type="button" class="segbtn ${f.category==='compound'?'active-ped':''}" onclick="updateForm('category','compound')">Compound</button>
+            </div>
+          </label>
+          <div class="row2">
+            <label class="field"><span class="fieldlabel">Menge</span>
+              <input type="text" data-field="amount" value="${esc(f.amount)}" placeholder="z. B. 25" oninput="updateFormSilent('amount',this.value)">
+            </label>
+            <label class="field"><span class="fieldlabel">Einheit</span>
+              <select onchange="updateForm('unit',this.value)">
+                ${unitOptions.map(u=>`<option value="${u}" ${f.unit===u?'selected':''}>${u}</option>`).join("")}
+              </select>
+            </label>
+          </div>
+          <label class="field"><span class="fieldlabel">Inhaltsstoffe</span>
+            <div class="ingredients-list">
+              ${f.ingredients.map(ing => `
+                <div class="ingredient-row">
+                  <input type="text" value="${esc(ing.name)}" placeholder="Wirkstoff" oninput="updateIngredientSilent('${ing.id}','name',this.value)">
+                  <input type="text" value="${esc(ing.amount)}" placeholder="Menge" oninput="updateIngredientSilent('${ing.id}','amount',this.value)">
+                  <select onchange="updateIngredientSilent('${ing.id}','unit',this.value)">
+                    ${unitOptions.map(u=>`<option value="${u}" ${ing.unit===u?'selected':''}>${u}</option>`).join("")}
+                  </select>
+                  <button type="button" class="iconbtn small" onclick="removeIngredient('${ing.id}')">✕</button>
+                </div>
+              `).join("") || `<div class="emptynote" style="padding:12px;">Noch keine Inhaltsstoffe.</div>`}
+            </div>
+            <button type="button" class="addbtn" onclick="addIngredient()">+ Wirkstoff hinzufügen</button>
+          </label>
+          ${f.category==='compound' ? `
+          <label class="field"><span class="fieldlabel">Spritze aufziehen (UI)</span>
+            <input type="text" data-field="syringeUnits" value="${esc(f.syringeUnits)}" placeholder="z. B. 25 UI" oninput="updateFormSilent('syringeUnits',this.value)">
+          </label>` : ""}
+          <label class="field"><span class="fieldlabel">Zeitplan</span>
+            <select onchange="updateForm('scheduleType',this.value)">
+              ${Object.entries(SCHEDULES).map(([k,v])=>`<option value="${k}" ${f.scheduleType===k?'selected':''}>${v}</option>`).join("")}
+            </select>
+          </label>
+          ${f.scheduleType==='every_n' ? `
+          <label class="field"><span class="fieldlabel">Intervall (Tage)</span>
+            <input type="number" min="1" data-field="interval" value="${esc(f.interval)}" oninput="updateFormSilent('interval',this.value)">
+          </label>` : ""}
+          ${f.scheduleType==='weekly' ? `
+          <label class="field"><span class="fieldlabel">Wochentage</span>
+            <div class="weekpicker">
+              ${WEEKDAYS.map((w,idx)=>`<button type="button" class="weekpick ${f.weekdays.includes(idx)?'active':''}" onclick="toggleWeekday(${idx})">${w}</button>`).join("")}
+            </div>
+          </label>` : ""}
+          <label class="field"><span class="fieldlabel">${f.scheduleType==='once'?'Datum':'Startdatum'}</span>
+            <input type="date" data-field="startDate" value="${esc(f.startDate)}" oninput="updateFormSilent('startDate',this.value)">
+          </label>
+          <label class="field"><span class="fieldlabel">Notizen</span>
+            <textarea data-field="notes" oninput="updateFormSilent('notes',this.value)" placeholder="Optional">${esc(f.notes)}</textarea>
+          </label>
+        </div>
+        <div class="modalfoot">
+          <button class="secondarybtn" onclick="closeModal()">Abbrechen</button>
+          <button class="primarybtn" id="saveBtn" ${(!f.name.trim()||!f.amount.toString().trim())?'disabled':''} onclick="saveForm()">Speichern</button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function updateForm(key, value){
+  ui.modal.form[key] = value;
+  renderModal();
+}
+// Für Text-/Zahlen-/Datumsfelder: Zustand aktualisieren, OHNE das Modal neu zu zeichnen.
+// So verliert das Eingabefeld nie den Fokus und die Tastatur bleibt offen.
+function updateFormSilent(key, value){
+  ui.modal.form[key] = value;
+  const f = ui.modal.form;
+  const btn = document.getElementById('saveBtn');
+  if (btn) btn.disabled = !(f.name.trim() && f.amount.toString().trim());
+}
+function addIngredient(){
+  ui.modal.form.ingredients.push({ id: uid(), name:"", amount:"", unit:"mg" });
+  renderModal();
+}
+function removeIngredient(ingId){
+  ui.modal.form.ingredients = ui.modal.form.ingredients.filter(i => i.id !== ingId);
+  renderModal();
+}
+function updateIngredientSilent(ingId, key, value){
+  const ing = ui.modal.form.ingredients.find(i => i.id === ingId);
+  if (ing) ing[key] = value;
+}
+function toggleWeekday(idx){
+  const f = ui.modal.form;
+  const has = f.weekdays.includes(idx);
+  f.weekdays = has ? f.weekdays.filter(w=>w!==idx) : [...f.weekdays, idx];
+  renderModal();
+}
+function saveForm(){
+  const f = ui.modal.form;
+  if (!f.name.trim() || !f.amount.toString().trim()) return;
+  const idx = state.items.findIndex(i=>i.id===f.id);
+  if (idx>=0) state.items[idx] = f; else state.items.push(f);
+  saveState(state);
+  ui.modal = null;
+  render();
+}
+
+render();
+</script>
+</body>
+</html>
